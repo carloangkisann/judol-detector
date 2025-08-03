@@ -164,27 +164,3 @@ async def get_video_info(video_id: str):
     except Exception as e:
         logger.error(f"Failed to get video info: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to get video info: {str(e)}")
-
-@router.get("/test-normalization")
-async def test_unicode_normalization():
-    """
-    Test Unicode normalization functionality
-    """
-    try:
-        test_results = detector.normalizer.test_normalization()
-        
-        return {
-            "success": True,
-            "test_results": test_results,
-            "supported_fonts": [
-                "Mathematical Italic",
-                "Mathematical Sans-Serif Bold", 
-                "Mathematical Sans-Serif Bold Italic",
-                "Fullwidth",
-                "Monospace"
-            ]
-        }
-        
-    except Exception as e:
-        logger.error(f"Normalization test failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Normalization test failed: {str(e)}")
