@@ -2,6 +2,7 @@ import logging
 from fastapi import APIRouter, HTTPException, Query
 from app.models.schemas import AuthStatusResponse
 from app.core.auth_manager import get_auth_manager
+from fastapi.responses import RedirectResponse
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -57,19 +58,24 @@ async def handle_oauth_callback(code: str = Query(..., description="Authorizatio
     try:
         success = auth_manager.handle_oauth_callback(code)
         if success:
-            auth_info = auth_manager.get_auth_info()
-            return {
-                "success": True,
-                "message": "Authentication successful! Session created in memory.",
-                "session_info": {
-                    "session_id": auth_info['session_id'],
-                    "auth_time": auth_info['auth_time'],
-                },
-            }
+            # auth_info = auth_manager.get_auth_info()
+            # return {
+            #     "success": True,
+            #     "message": "Authentication successful! Session created in memory.",
+            #     "session_info": {
+            #         "session_id": auth_info['session_id'],
+            #         "auth_time": auth_info['auth_time'],
+            #     },
+            # }
+            redirect_url = f"https://judol-detector-gg.vercel.app/auth/callback?status=success"
+            return RedirectResponse(url=redirect_url, status_code=303)
         else:
-            raise HTTPException(status_code=400, detail="Authentication failed")
+            redirect_url = f"https://judol-detector-gg.vercel.app/auth/callback?status=error&message=Authentication failed"
+            return RedirectResponse(url=redirect_url, status_code=303)
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"OAuth callback error: {str(e)}")
+        logger.error(f"OAuth callback error: {e}")
+        redirect_url = f"https://judol-detector-gg.vercel.app/auth/callback?status=error&message={str(e)}"
+        return RedirectResponse(url=redirect_url, status_code=303)
 
 @router.post("/revoke")
 async def revoke_authentication():
