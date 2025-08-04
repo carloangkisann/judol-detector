@@ -1,58 +1,61 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState, Suspense } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
-import { Button } from '@/components/ui';
-import { CheckCircle, XCircle, Home } from 'lucide-react';
-import { useAuth } from '@/lib/context/AuthContext';
+import React, { useEffect, useState, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { Button } from "@/components/ui";
+import { CheckCircle, XCircle, Home } from "lucide-react";
+import { useAuth } from "@/lib/context/AuthContext";
 
 // Separate component that uses useSearchParams
 function AuthCallbackContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { checkAuthStatus } = useAuth();
-  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
-  const [message, setMessage] = useState('');
+  const [status, setStatus] = useState<"loading" | "success" | "error">(
+    "loading"
+  );
+  const [message, setMessage] = useState("");
   const [countdown, setCountdown] = useState(3);
 
   useEffect(() => {
-    const code = searchParams.get('code');
-    const error = searchParams.get('error');
+    const authStatusParam = searchParams.get("status");
+    const errorMessageParam = searchParams.get("message");
 
-    if (error) {
-      setStatus('error');
-      setMessage(`Authentication failed: ${error}`);
-      return;
-    }
+    if (authStatusParam === "success") {
+      checkAuthStatus()
+        .then(() => {
+          setStatus("success");
+          setMessage(
+            "Authentication successful! You can now manage YouTube comments."
+          );
 
-    if (!code) {
-      setStatus('error');
-      setMessage('No authorization code received');
-      return;
-    }
+          const timer = setInterval(() => {
+            setCountdown((prev) => {
+              if (prev <= 1) {
+                clearInterval(timer);
+                router.push("/comments");
+                return 0;
+              }
+              return prev - 1;
+            });
+          }, 1000);
 
-    // Refresh auth status and show success
-    checkAuthStatus().then(() => {
-      setStatus('success');
-      setMessage('Authentication successful! You can now manage YouTube comments.');
-      
-      // Start countdown
-      const timer = setInterval(() => {
-        setCountdown(prev => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            router.push('/comments');
-            return 0;
-          }
-          return prev - 1;
+          return () => clearInterval(timer);
+        })
+        .catch((err) => {
+          setStatus("error");
+          setMessage("Failed to verify authentication status");
+          console.error("Authentication callback error:", err);
         });
-      }, 1000);
-
-      return () => clearInterval(timer);
-    }).catch(() => {
-      setStatus('error');
-      setMessage('Failed to verify authentication status');
-    });
+    } else if (authStatusParam === "error") {
+      setStatus("error");
+      setMessage(
+        errorMessageParam || "Authentication failed: An unknown error occurred."
+      );
+    } else {
+      setStatus("error");
+      setMessage("Invalid authentication callback. Please try again.");
+    }
   }, [searchParams, router, checkAuthStatus]);
 
   return (
@@ -68,7 +71,7 @@ function AuthCallbackContent() {
 
         {/* Content Card */}
         <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-          {status === 'loading' && (
+          {status === "loading" && (
             <div className="text-center py-12">
               <div className="mx-auto w-16 h-16 mb-6">
                 <div className="animate-spin rounded-full h-16 w-16 border-4 border-pink-200 border-t-pink-600"></div>
@@ -82,7 +85,7 @@ function AuthCallbackContent() {
             </div>
           )}
 
-          {status === 'success' && (
+          {status === "success" && (
             <div className="text-center py-8">
               <div className="mx-auto w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-6">
                 <CheckCircle className="h-10 w-10 text-green-600" />
@@ -90,24 +93,25 @@ function AuthCallbackContent() {
               <h2 className="text-2xl font-bold text-gray-900 mb-3">
                 Authentication Successful!
               </h2>
-              <p className="text-gray-600 mb-8 leading-relaxed">
-                {message}
-              </p>
-              
+              <p className="text-gray-600 mb-8 leading-relaxed">{message}</p>
+
               {/* Countdown */}
               <div className="bg-green-50 rounded-xl p-6 mb-6 border border-green-200">
                 <div className="flex items-center justify-center space-x-3">
                   <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
-                    <span className="text-white font-bold text-sm">{countdown}</span>
+                    <span className="text-white font-bold text-sm">
+                      {countdown}
+                    </span>
                   </div>
                   <span className="text-green-800 font-medium">
-                    Redirecting to comments page in {countdown} second{countdown !== 1 ? 's' : ''}...
+                    Redirecting to comments page in {countdown} second
+                    {countdown !== 1 ? "s" : ""}...
                   </span>
                 </div>
               </div>
 
-              <Button 
-                onClick={() => router.push('/comments')}
+              <Button
+                onClick={() => router.push("/comments")}
                 className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white px-8 py-3 rounded-xl font-medium transition-all duration-200 shadow-lg hover:shadow-xl"
               >
                 Go to Comments Now
@@ -115,7 +119,7 @@ function AuthCallbackContent() {
             </div>
           )}
 
-          {status === 'error' && (
+          {status === "error" && (
             <div className="text-center py-8">
               <div className="mx-auto w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mb-6">
                 <XCircle className="h-10 w-10 text-red-600" />
@@ -129,16 +133,15 @@ function AuthCallbackContent() {
                   {message}
                 </p>
               </div>
-              
+
               <div className="space-y-3">
-                <Button 
-                  onClick={() => router.push('/')}
+                <Button
+                  onClick={() => router.push("/")}
                   className="w-full text-white px-6 py-3 rounded-xl font-medium transition-all duration-200 shadow-lg hover:shadow-xl"
                 >
                   <Home className="w-5 h-5 mr-2" />
                   Return to Home
                 </Button>
-                
               </div>
             </div>
           )}
@@ -158,19 +161,18 @@ function AuthCallbackContent() {
 // Main component with Suspense boundary
 export default function AuthCallbackPage() {
   return (
-    <Suspense 
+    <Suspense
       fallback={
         <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50 flex items-center justify-center p-4">
           <div className="max-w-lg w-full">
             <div className="text-center mb-12">
-              <div className="mx-auto w-16 h-16 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full flex items-center justify-center mb-6 shadow-lg">
-              </div>
+              <div className="mx-auto w-16 h-16 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full flex items-center justify-center mb-6 shadow-lg"></div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">
                 Authentication Status
               </h1>
               <p className="text-gray-600">Loading authentication status...</p>
             </div>
-            
+
             <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
               <div className="text-center py-12">
                 <div className="mx-auto w-16 h-16 mb-6">
