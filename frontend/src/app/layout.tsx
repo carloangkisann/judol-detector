@@ -8,6 +8,7 @@ import { AuthProvider } from '@/lib/context/AuthContext';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
   title: 'Judol Detector | YouTube Gambling Comment Detection',
   description: 'Advanced gambling comment detection system for YouTube videos using multiple string matching algorithms',
   keywords: ['youtube', 'comment', 'detection', 'gambling', 'moderation', 'algorithm'],
