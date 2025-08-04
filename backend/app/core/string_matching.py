@@ -114,7 +114,7 @@ class BoyerMooreMatcher(StringMatcher):
         bad_char = self._build_bad_char_table(pattern_lower)
         matches = []
         
-        s = 0  # shift of the pattern with respect to text
+        s = 0 
         
         while s <= n - m:
             j = m - 1
@@ -124,9 +124,10 @@ class BoyerMooreMatcher(StringMatcher):
             
             if j < 0:
                 matches.append(s)
-                s += (m - bad_char.get(text_lower[s + m], -1) - 1) if s + m < n else 1
+                s += 1 
             else:
-                s += max(1, j - bad_char.get(text_lower[s + j], -1))
+                bad_char_shift = j - bad_char.get(text_lower[s + j], -1)
+                s += max(1, bad_char_shift)
         
         return matches
     
